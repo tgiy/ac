@@ -24,8 +24,11 @@ jobs:
           SEARCH_KEYWORDS: ${{ secrets.KEY }}
         run: node 1.js
 
-      - name: Push
-        uses: ad-m/github-push-action@v0.8.0
+      - name: Copy
+        run: cp /tmp/s.json ./logs/s.json
+
+      - name: Push to private repo
+        uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repository: tgiy/dc
