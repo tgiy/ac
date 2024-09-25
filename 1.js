@@ -13,7 +13,7 @@ async function fetchWithRetry(url, config, retries = MAX_RETRIES) {
   } catch (error) {
     if (error.response && error.response.status === 403 && error.response.data.message.includes('rate limit')) {
       const retryAfter = parseInt(error.response.headers['retry-after'], 10) || 60; 
-      console.warn(API rate limit exceeded. Waiting ${retryAfter} seconds before retrying...);
+      console.warn(`API rate limit exceeded. Waiting ${retryAfter} seconds before retrying...`);
       await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
       if (retries > 0) {
         return fetchWithRetry(url, config, retries - 1);
@@ -21,7 +21,7 @@ async function fetchWithRetry(url, config, retries = MAX_RETRIES) {
         throw error;
       }
     } else if (retries > 0) {
-      console.warn(Request failed. Retrying... (${MAX_RETRIES - retries + 1}/${MAX_RETRIES}));
+      console.warn(`Request failed. Retrying... (${MAX_RETRIES - retries + 1}/${MAX_RETRIES})`);
       await new Promise(resolve => setTimeout(resolve, 1000)); 
       return fetchWithRetry(url, config, retries - 1);
     } else {
@@ -30,20 +30,20 @@ async function fetchWithRetry(url, config, retries = MAX_RETRIES) {
   }
 }
 async function searchGitHubCode(query, page = 1) {
-  const url = https://api.github.com/search/code?q=${encodeURIComponent(query)}&page=${page}&per_page=100;
+  const url = `https://api.github.com/search/code?q=${encodeURIComponent(query)}&page=${page}&per_page=100`;
   const config = {
     headers: {
-      Authorization: token ${GITHUB_TOKEN},
+      Authorization: `token ${GITHUB_TOKEN}`,
       Accept: 'application/vnd.github.v3+json'
     }
   };
   return fetchWithRetry(url, config);
 }
 async function getFileLastModifiedDate(owner, repo, path) {
-  const url = https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)};
+  const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}`;
   const config = {
     headers: {
-      Authorization: token ${GITHUB_TOKEN},
+      Authorization: `token ${GITHUB_TOKEN}`,
       Accept: 'application/vnd.github.v3+json'
     }
   };
@@ -86,7 +86,7 @@ async function writeJSONFile(data) {
               });
             }
           } catch (error) {
-            console.error(Failed to get last modified date for ${fileUrl}:, error.message);
+            console.error(`Failed to get last modified date for ${fileUrl}:`, error.message);
           }
         }
         page++;
