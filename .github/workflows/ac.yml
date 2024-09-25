@@ -23,6 +23,9 @@ jobs:
           GT: ${{ secrets.GT }}
           KEY: ${{ secrets.KEY }}
         run: node 1.js
+        
+      - name: Create
+        run: mkdir -p ./logs
 
       - name: Copy
         run: cp /tmp/s.json ./logs/s.json
