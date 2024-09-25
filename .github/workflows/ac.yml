@@ -27,13 +27,39 @@ jobs:
       - name: Create
         run: mkdir -p ./logs
 
-      - name: Copy
-        run: cp /tmp/s.json ./logs/s.json
 
-      - name: Push to private repo
-        uses: ad-m/github-push-action@v0.6.0
+
+      - name: Checkout public repo job6
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.CD }}
           repository: tgiy/dc
-          branch: main
-          directory: ./logs
+          ref: main
+          path: dc
+          token: ${{ secrets.CD }} 
+      - name: Copy
+        run: |
+          cd ac
+          shopt -s extglob
+          rsync -rv ../dc/
+      - name: Check if changes were made job6
+        id: check_changes
+        run: |
+          cd dc
+          modified=$(git status --porcelain)
+          if [ -n "$modified" ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Push changes
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          cd dc
+          git config --global user.name 'zz'
+          git config --global user.email 'zz@gmail.com'
+          git add ac
+          git commit -m "zz"
+          git remote set-url origin https://tgiy:${{ secrets.CD }}@github.com/tgiy/dc.git
+          git pull --rebase origin main
+          git push origin main
+
