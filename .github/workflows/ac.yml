@@ -10,17 +10,8 @@ jobs:
       - name: Checkout public repo
         uses: actions/checkout@v4
         with:
-          repository: tgiy/dc
-          ref: main
-          path: dc
-          token: ${{ secrets.CD }}
-
-      - name: Checkout private repo
-        uses: actions/checkout@v4
-        with:
           repository: tgiy/ac
           ref: main
-          path: ac
           token: ${{ secrets.CD }}
 
       - name: Set up Node.js
@@ -30,17 +21,22 @@ jobs:
 
       - name: Install dependencies
         run: npm install axios moment fs.promises
-        working-directory: ac 
 
-      - name: Run Node.js script
+      - name: Run script
         env:
           GT: ${{ secrets.GT }}
           KEY: ${{ secrets.KEY }}
-        run: |
-          node ac/1.js 
-          mv ./logs/s.json ./dc/logs/s.json 
+        run: node ac/1.js
 
-      - name: Check if changes were made
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          repository: tgiy/dc
+          ref: main
+          path: dc
+          token: ${{ secrets.CD }}
+
+      - name: Check for changes
         id: check_changes
         run: |
           cd dc
