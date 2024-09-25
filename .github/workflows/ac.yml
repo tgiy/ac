@@ -7,67 +7,49 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout public repo
         uses: actions/checkout@v4
+        with:
+          repository: tgiy/dc
+          ref: main
+          path: dc
+          token: ${{ secrets.CD }}
 
-      - name: Set
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install
+      - name: Install dependencies
         run: npm install axios moment fs.promises
 
-      - name: node
+      - name: Run Node.js script
         env:
           GT: ${{ secrets.GT }}
           KEY: ${{ secrets.KEY }}
-        run: node 1.js
-        
-      - name: Create
-        run: mkdir -p ./logs
-
-      - name: Checkout private repo
-        uses: actions/checkout@v4
-        with:
-          repository: tgiy/ac
-          ref: main
-          path: ac
-          token: ${{ secrets.CD }}
-
-      - name: Checkout public
-        uses: actions/checkout@v4
-        with:
-            repository: tgiy/dc
-            ref: main
-            path: dc
-            token: ${{ secrets.CD }}
-
-      - name: Copy
         run: |
-            cd ac
-            shopt -s extglob
-            rsync -rv ../dc/ .
+          node 1.js
+          mv ./logs/s.json ./dc/logs/s.json
 
-      - name: Check if changes were made job6
+      - name: Check if changes were made
         id: check_changes
         run: |
-            cd dc
-            git add .
-            modified=$(git status --porcelain)
-            if [ -n "$modified" ]; then
-                echo "changes=true" >> $GITHUB_OUTPUT
-            else
-                echo "changes=false" >> $GITHUB_OUTPUT
-            fi
+          cd dc
+          git add .
+          modified=$(git status --porcelain)
+          if [ -n "$modified" ]; then
+              echo "changes=true" >> $GITHUB_OUTPUT
+          else
+              echo "changes=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Push changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
-            cd dc
-            git config --global user.name 'zz'
-            git config --global user.email 'zz@gmail.com'
-            git commit -m "zz"
-            git remote set-url origin https://tgiy:${{ secrets.CD }}@github.com/tgiy/dc.git
-            git pull --rebase origin main
-            git push origin main
+          cd dc
+          git config --global user.name 'zz'
+          git config --global user.email 'zz@gmail.com'
+          git commit -m "Update s.json"
+          git remote set-url origin https://tgiy:${{ secrets.CD }}@github.com/tgiy/dc.git
+          git pull --rebase origin main
+          git push origin main
