@@ -29,37 +29,39 @@ jobs:
 
 
 
-      - name: Checkout public repo job6
+      - name: Checkout public
         uses: actions/checkout@v4
         with:
-          repository: tgiy/dc
-          ref: main
-          path: dc
-          token: ${{ secrets.CD }} 
+            repository: tgiy/dc
+            ref: main
+            path: dc
+            token: ${{ secrets.CD }}
+
       - name: Copy
         run: |
-          cd ac
-          shopt -s extglob
-          rsync -rv ../dc/
+            cd ac
+            shopt -s extglob
+            rsync -rv ../dc/ .
+
       - name: Check if changes were made job6
         id: check_changes
         run: |
-          cd dc
-          modified=$(git status --porcelain)
-          if [ -n "$modified" ]; then
-            echo "changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "changes=false" >> $GITHUB_OUTPUT
-          fi
+            cd dc
+            git add .
+            modified=$(git status --porcelain)
+            if [ -n "$modified" ]; then
+                echo "changes=true" >> $GITHUB_OUTPUT
+            else
+                echo "changes=false" >> $GITHUB_OUTPUT
+            fi
+
       - name: Push changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
-          cd dc
-          git config --global user.name 'zz'
-          git config --global user.email 'zz@gmail.com'
-          git add ac
-          git commit -m "zz"
-          git remote set-url origin https://tgiy:${{ secrets.CD }}@github.com/tgiy/dc.git
-          git pull --rebase origin main
-          git push origin main
-
+            cd dc
+            git config --global user.name 'zz'
+            git config --global user.email 'zz@gmail.com'
+            git commit -m "zz"
+            git remote set-url origin https://tgiy:${{ secrets.CD }}@github.com/tgiy/dc.git
+            git pull --rebase origin main
+            git push origin main
