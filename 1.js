@@ -4,7 +4,7 @@ const fs = require('fs').promises;
 const GITHUB_TOKEN = process.env.GT;
 const SEARCH_KEYWORDS = process.env.KEY ? JSON.parse(process.env.KEY) : [];
 const START_DATE = moment('2024-09-01'); 
-const OUTPUT_FILE = '/tmp/s.json';
+const OUTPUT_FILE = './dc/logs/s.json';
 const MAX_RETRIES = 5;
 async function fetchWithRetry(url, config, retries = MAX_RETRIES) {
   try {
@@ -60,7 +60,7 @@ async function readJSONFile() {
   }
 }
 async function writeJSONFile(data) {
-  await fs.writeFile(OUTPUT_FILE, JSON.stringify(data, null, 2), 'utf8');
+    await fs.writeFile(OUTPUT_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 (async () => {
   let results = [];
