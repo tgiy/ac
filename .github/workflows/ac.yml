@@ -27,7 +27,13 @@ jobs:
       - name: Create
         run: mkdir -p ./logs
 
-
+      - name: Checkout private repo
+        uses: actions/checkout@v4
+        with:
+          repository: tgiy/ac
+          ref: main
+          path: ac
+          token: ${{ secrets.CD }}
 
       - name: Checkout public
         uses: actions/checkout@v4
