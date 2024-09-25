@@ -20,7 +20,7 @@ jobs:
 
       - name: node
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GT }}
           SEARCH_KEYWORDS: ${{ secrets.KEY }}
         run: node 1.js
 
