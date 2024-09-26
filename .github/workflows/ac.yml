@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout public repo
+      - name: Checkout ac repo
         uses: actions/checkout@v4
         with:
           repository: tgiy/ac
@@ -35,6 +35,11 @@ jobs:
           ref: main
           path: dc
           token: ${{ secrets.CD }}
+
+      - name: Copy s.json to dc
+        run: |
+          mkdir -p dc/logs
+          cp /tmp/s.json dc/logs/s.json
 
       - name: Check for changes
         id: check_changes
