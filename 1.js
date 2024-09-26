@@ -1,6 +1,7 @@
 const axios = require('axios');
 const moment = require('moment');
 const fs = require('fs').promises;
+
 const GITHUB_TOKENS = [process.env.GT, process.env.GT2, process.env.GT3];
 let tokenIndex = 0;
 
@@ -50,10 +51,10 @@ async function searchGitHubCode(query, page = 1) {
 }
 
 async function getFileLastModifiedDate(owner, repo, path) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)};`
+    const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}`;
     const config = {
         headers: {
-            Authorization: `token ${GITHUB_TOKEN},`
+            Authorization: `token ${GITHUB_TOKENS[tokenIndex]}`, 
             Accept: 'application/vnd.github.v3+json'
         }
     };
