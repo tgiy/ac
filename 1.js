@@ -1,8 +1,9 @@
 const axios = require('axios');
 const moment = require('moment');
 const fs = require('fs').promises;
+const GITHUB_TOKENS = [process.env.GT, process.env.GT2, process.env.GT3];
+let tokenIndex = 0;
 
-const GITHUB_TOKEN = process.env.GT;
 const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
 const START_DATE = moment('2024-09-01');
 const OUTPUT_FILE = '/tmp/s.json'; 
@@ -34,20 +35,25 @@ async function fetchWithRetry(url, config, retries = MAX_RETRIES) {
 
 async function searchGitHubCode(query, page = 1) {
     const url = `https://api.github.com/search/code?q=${encodeURIComponent(query)}&page=${page}&per_page=100`;
+    
+    const GITHUB_TOKEN = GITHUB_TOKENS[tokenIndex];
     const config = {
         headers: {
             Authorization: `token ${GITHUB_TOKEN}`,
             Accept: 'application/vnd.github.v3+json'
         }
     };
+
+    tokenIndex = (tokenIndex + 1) % GITHUB_TOKENS.length;
+
     return fetchWithRetry(url, config);
 }
 
 async function getFileLastModifiedDate(owner, repo, path) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}`;
+    const url = https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)};
     const config = {
         headers: {
-            Authorization: `token ${GITHUB_TOKEN}`,
+            Authorization: token ${GITHUB_TOKEN},
             Accept: 'application/vnd.github.v3+json'
         }
     };
