@@ -3,7 +3,7 @@ const moment = require('moment');
 const fs = require('fs').promises;
 
 const GITHUB_TOKEN = process.env.GT;
-const SEARCH_KEYWORDS = process.env.KEY;
+const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
 console.log('SEARCH_KEYWORDS:', SEARCH_KEYWORDS);
 const START_DATE = moment('2024-09-01');
 const OUTPUT_FILE = '/tmp/s.json'; 
