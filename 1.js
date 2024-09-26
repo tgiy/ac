@@ -50,10 +50,10 @@ async function searchGitHubCode(query, page = 1) {
 }
 
 async function getFileLastModifiedDate(owner, repo, path) {
-    const url = https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)};
+    const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)};`
     const config = {
         headers: {
-            Authorization: token ${GITHUB_TOKEN},
+            Authorization: `token ${GITHUB_TOKEN},`
             Accept: 'application/vnd.github.v3+json'
         }
     };
