@@ -26,7 +26,7 @@ jobs:
         env:
           GT: ${{ secrets.GT }}
           KEY: ${{ secrets.KEY }}
-        run: node ac/1.js
+        run: node 1.js
 
       - name: Checkout target repo
         uses: actions/checkout@v4
