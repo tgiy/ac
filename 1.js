@@ -3,20 +3,7 @@ const moment = require('moment');
 const fs = require('fs').promises;
 
 const GITHUB_TOKEN = process.env.GT;
-const SEARCH_KEYWORDS = [
-  'L2Rvd25sb2FkQ29',
-  'L1N1YnNjcmlwdGlvbi9',
-  '"tagcdnsub"',
-  '"tagsub.net"',
-  '"kuromisubs.shop"',
-  '"2Fkuromisubs.shop"',
-  '"wgetcloud.online/link"',
-  '"911tg3rs.com/api/v1/client/subscribe"',
-  '"2F911tg3rs.com"',
-  '"dler.cloud/subscribe"',
-  '"2Fdler"',
-  '"xmancdn"',
-];
+const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
 const START_DATE = moment('2024-09-01');
 const OUTPUT_FILE = '/tmp/s.json'; 
 const MAX_RETRIES = 5;
