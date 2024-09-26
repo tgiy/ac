@@ -61,8 +61,8 @@ jobs:
         if: steps.check_changes.outputs.changes == 'true'
         run: |
           cd dc
-          git config --global user.name 'zz'
-          git config --global user.email 'zz@gmail.com'
+          git config --global user.name 'tgiy'
+          git config --global user.email 'tgiy@action.com'
           git commit -m "Update s.json"
           git remote set-url origin https://tgiy:${{ secrets.CD }}@github.com/tgiy/dc.git
           git pull --rebase origin main
