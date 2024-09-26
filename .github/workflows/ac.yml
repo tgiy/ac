@@ -24,8 +24,11 @@ jobs:
 
       - name: Run script
         env:
+          GT3: ${{ secrets.GT3 }}
+          GT2: ${{ secrets.GT2 }}
           GT: ${{ secrets.GT }}
           KEY: ${{ secrets.KEY }}
+        
         run: node 1.js
 
       - name: Checkout target repo
