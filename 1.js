@@ -6,7 +6,7 @@ const GITHUB_TOKENS = [process.env.GT, process.env.GT2, process.env.GT3];
 let tokenIndex = 0;
 
 const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
-const START_DATE = moment('2024-09-01');
+const START_DATE = moment().subtract(2, 'hours');
 const OUTPUT_FILE = '/tmp/s.json'; 
 const MAX_RETRIES = 5;
 
