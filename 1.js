@@ -2,13 +2,13 @@ const axios = require('axios');
 const moment = require('moment');
 const fs = require('fs').promises;
 
-const GITHUB_TOKENS = [process.env.GT, process.env.GT2, process.env.GT3];
+const GITHUB_TOKENS = [process.env.GT, process.env.GT2, process.env.GT3, process.env.GT4];
 let tokenIndex = 0;
 
 const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
 const START_DATE = moment().subtract(10, 'days');
 const OUTPUT_FILE = '/tmp/s.json'; 
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 6;
 
 async function fetchWithRetry(url, config, retries = MAX_RETRIES) {
     try {
