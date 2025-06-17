@@ -87,6 +87,9 @@ async function writeJSONFile(data) {
                 if (data.items.length === 0) break;
                 for (const item of data.items) {
                     const fileUrl = item.html_url;
+                    if (fileUrl.includes('url_check.txt')) {
+                        continue;
+                    }
                     const filePath = item.path;
                     const [owner, repo] = item.repository.full_name.split('/');
                     try {
