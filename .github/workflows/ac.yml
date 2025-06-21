@@ -25,6 +25,8 @@ jobs:
 
       - name: Run script
         env:
+          GT6: ${{ secrets.GT3 }}
+          GT5: ${{ secrets.GT3 }}
           GT4: ${{ secrets.GT4 }}
           GT3: ${{ secrets.GT3 }}
           GT2: ${{ secrets.GT2 }}
