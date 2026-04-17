@@ -1,14 +1,33 @@
 const axios = require('axios');
 const moment = require('moment');
 const fs = require('fs').promises;
+const GITHUB_TOKENS = [
+    process.env.GT, 
+    process.env.GT2, 
+    process.env.GT3, 
+    process.env.GT4, 
+    process.env.GT5, 
+    process.env.GT6
+].filter(t => t);
 
-const GITHUB_TOKENS = [process.env.GT, process.env.GT2, process.env.GT3, process.env.GT4, process.env.GT5, process.env.GT6];
 let tokenIndex = 0;
 
 const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
 const START_DATE = moment().subtract(10, 'days');
 const OUTPUT_FILE = '/tmp/s.json'; 
 const MAX_RETRIES = 6;
+
+
+function getNextConfig() {
+    const token = GITHUB_TOKENS[tokenIndex];
+    tokenIndex = (tokenIndex + 1) % GITHUB_TOKENS.length;
+    return {
+        headers: {
+            Authorization: `token ${token}`,
+            Accept: 'application/vnd.github.v3+json'
+        }
+    };
+}
 
 async function fetchWithRetry(url, config, retries = MAX_RETRIES) {
     try {
@@ -20,6 +39,7 @@ async function fetchWithRetry(url, config, retries = MAX_RETRIES) {
             console.warn(`API rate limit exceeded. Waiting ${retryAfter} seconds before retrying...`);
             await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
             if (retries > 0) {
+
                 return fetchWithRetry(url, config, retries - 1);
             } else {
                 throw error;
@@ -36,31 +56,19 @@ async function fetchWithRetry(url, config, retries = MAX_RETRIES) {
 
 async function searchGitHubCode(query, page = 1) {
     const url = `https://api.github.com/search/code?q=${encodeURIComponent(query)}&page=${page}&per_page=100`;
-    
-    const GITHUB_TOKEN = GITHUB_TOKENS[tokenIndex];
-    const config = {
-        headers: {
-            Authorization: `token ${GITHUB_TOKEN}`,
-            Accept: 'application/vnd.github.v3+json'
-        }
-    };
 
-    tokenIndex = (tokenIndex + 1) % GITHUB_TOKENS.length;
-
-    return fetchWithRetry(url, config);
+    return fetchWithRetry(url, getNextConfig());
 }
 
 async function getFileLastModifiedDate(owner, repo, path) {
     const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}`;
-    const config = {
-        headers: {
-            Authorization: `token ${GITHUB_TOKENS[tokenIndex]}`, 
-            Accept: 'application/vnd.github.v3+json'
-        }
-    };
-    const data = await fetchWithRetry(url, config);
-    const commit = data[0];
-    return commit.commit.committer.date;
+
+    const data = await fetchWithRetry(url, getNextConfig());
+    if (data && data.length > 0) {
+        const commit = data[0];
+        return commit.commit.committer.date;
+    }
+    throw new Error('No commits found for this file.');
 }
 
 async function readJSONFile() {
@@ -78,20 +86,26 @@ async function writeJSONFile(data) {
 
 (async () => {
     let results = [];
+    if (GITHUB_TOKENS.length === 0) {
+        console.error("No GitHub Tokens found in environment variables.");
+        return;
+    }
+
     for (const keyword of SEARCH_KEYWORDS) {
         let page = 1;
         const query = keyword;
         while (true) {
             try {
                 const data = await searchGitHubCode(query, page);
-                if (data.items.length === 0) break;
+                if (!data.items || data.items.length === 0) break;
+
                 for (const item of data.items) {
                     const fileUrl = item.html_url;
-                    if (fileUrl.includes('url_check.txt')) {
-                        continue;
-                    }
+                    if (fileUrl.includes('url_check.txt')) continue;
+
                     const filePath = item.path;
                     const [owner, repo] = item.repository.full_name.split('/');
+
                     try {
                         const lastModifiedDate = await getFileLastModifiedDate(owner, repo, filePath);
                         const fileDate = moment(lastModifiedDate);
@@ -103,20 +117,24 @@ async function writeJSONFile(data) {
                             });
                         }
                     } catch (error) {
-                        console.error(`Failed to get last modified date for ${fileUrl}:`, error.message);
+                        console.error(`Failed to get date for ${fileUrl}:`, error.message);
                     }
                 }
                 page++;
+
+                await new Promise(r => setTimeout(r, 1000)); 
             } catch (error) {
-                if (error.response && error.response.status === 403 && error.response.data.message.includes('rate limit')) {
-                    console.error('API rate limit exceeded during code search. Exiting.');
-                    return;
+                if (error.response && error.response.status === 403) {
+                    console.error('API rate limit hit during search. Current tokens might be exhausted.');
+                    break;
                 } else {
-                    throw error;
+                    console.error('Search error:', error.message);
+                    break;
                 }
             }
         }
     }
+
     const existingData = await readJSONFile();
     const updatedData = [...existingData];
     results.forEach(result => {
@@ -129,7 +147,8 @@ async function writeJSONFile(data) {
             updatedData.push(result);
         }
     });
+
     updatedData.sort((a, b) => moment(b.date).diff(moment(a.date)));
     await writeJSONFile(updatedData);
-    console.log('Filtered file URLs have been saved to', OUTPUT_FILE);
+    console.log(`Job finished. Processed ${results.length} new/updated items.`);
 })();
