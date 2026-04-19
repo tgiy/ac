@@ -3,9 +3,6 @@ const moment = require('moment');
 const fs = require('fs').promises;
 const TOKEN_NAMES = ["GT", "GT2", "GT3", "GT4", "GT5", "GT6", "GT7", "GT8", "GT9"];
 const GITHUB_TOKENS = TOKEN_NAMES.map(name => process.env[name]).filter(t => t);
-GITHUB_TOKENS.forEach((t, i) => {
-    console.log(`${TOKEN_NAMES[i]}: ${t.slice(-3).split('').join(' ')}`);
-});
 let tokenIndex = 0;
 const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
 const START_DATE = moment().subtract(10, 'days');
@@ -36,11 +33,10 @@ async function fetchWithRetry(url, config, type = "Request", retries = MAX_RETRI
             console.warn(`[${config.tokenName}] Limit Hit. Switching immediately...`);
             const nextConfig = getNextConfig();
             if (nextConfig.tokenIdx === 0) {
-                await new Promise(resolve => setTimeout(resolve, 10000));
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
             return fetchWithRetry(url, nextConfig, type, retries - 1);
         } else if (retries > 0) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
             return fetchWithRetry(url, config, type, retries - 1);
         } else {
             throw error;
@@ -93,7 +89,6 @@ async function writeJSONFile(data) {
                     } catch (e) {}
                 }
                 page++;
-                await new Promise(r => setTimeout(r, 500)); 
             } catch (error) { break; }
         }
     }
