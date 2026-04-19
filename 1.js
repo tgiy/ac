@@ -3,6 +3,9 @@ const moment = require('moment');
 const fs = require('fs').promises;
 const TOKEN_NAMES = ["GT", "GT2", "GT3", "GT4", "GT5", "GT6", "GT7", "GT8", "GT9"];
 const GITHUB_TOKENS = TOKEN_NAMES.map(name => process.env[name]).filter(t => t);
+GITHUB_TOKENS.forEach((t, i) => {
+    console.log(`${TOKEN_NAMES[i]}: ${t.slice(-3).split('').join(' ')}`);
+});
 let tokenIndex = 0;
 const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
 const START_DATE = moment().subtract(10, 'days');
