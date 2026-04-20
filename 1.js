@@ -28,18 +28,16 @@ async function fetchWithRetry(url, config, type = "Request", retries = MAX_RETRI
         const response = await axios.get(url, { headers: config.headers });
         return response.data;
     } catch (error) {
-        const isRateLimit = error.response && error.response.status === 403;
+        const isRateLimit = error.response && (error.response.status === 403 || error.response.status === 429);
         if (isRateLimit && retries > 0) {
-            console.warn(`[${config.tokenName}] Limit Hit. Switching immediately...`);
+            console.warn(`[${config.tokenName}] Limit Hit. Switching token...`);
             const nextConfig = getNextConfig();
-            if (nextConfig.tokenIdx === 0) {
-                await new Promise(resolve => setTimeout(resolve, 3000));
-            }
+            if (nextConfig.tokenIdx === 0) await new Promise(res => setTimeout(res, 3000));
             return fetchWithRetry(url, nextConfig, type, retries - 1);
         } else if (retries > 0) {
             return fetchWithRetry(url, config, type, retries - 1);
         } else {
-            throw error;
+            return null; 
         }
     }
 }
@@ -48,12 +46,13 @@ async function searchGitHubCode(query, page = 1) {
     return fetchWithRetry(url, getNextConfig(), "Search");
 }
 async function getFileLastModifiedDate(owner, repo, path) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}`;
+    const sinceIso = START_DATE.toISOString();
+    const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}&since=${sinceIso}`;
     const data = await fetchWithRetry(url, getNextConfig(), "GetDate");
     if (data && data.length > 0) {
         return data[0].commit.committer.date;
     }
-    throw new Error('No commit');
+    return null; 
 }
 async function readJSONFile() {
     try {
@@ -69,7 +68,7 @@ async function writeJSONFile(data) {
     if (GITHUB_TOKENS.length === 0) return;
     for (const keyword of SEARCH_KEYWORDS) {
         let page = 1;
-        while (true) {
+        while (page <= 10) {
             try {
                 const data = await searchGitHubCode(keyword, page);
                 if (!data || !data.items || data.items.length === 0) break;
@@ -78,16 +77,16 @@ async function writeJSONFile(data) {
                     const [owner, repo] = item.repository.full_name.split('/');
                     try {
                         const lastModifiedDate = await getFileLastModifiedDate(owner, repo, item.path);
-                        const fileDate = moment(lastModifiedDate);
-                        if (fileDate.isAfter(START_DATE)) {
+                        if (lastModifiedDate) {
                             results.push({
                                 keyword: keyword,
-                                date: fileDate.toISOString(),
+                                date: lastModifiedDate,
                                 url: item.html_url
                             });
                         }
                     } catch (e) {}
                 }
+                if (data.items.length < 100) break;
                 page++;
             } catch (error) { break; }
         }
@@ -102,8 +101,12 @@ async function writeJSONFile(data) {
             updatedData.push(result);
         }
     });
-    updatedData.sort((a, b) => moment(b.date).diff(moment(a.date)));
-    await writeJSONFile(updatedData);
+    const finalData = updatedData.filter(entry => {
+        return moment(entry.date).isAfter(START_DATE);
+    });
+    finalData.sort((a, b) => moment(b.date).diff(moment(a.date)));
+    await writeJSONFile(finalData);
     console.log(`\n--- Process Completed ---`);
-    console.log(`Updated items: ${results.length}`);
+    console.log(`Updated items (Found): ${results.length}`);
+    console.log(`Final items (Valid in 10 days): ${finalData.length}`);
 })();
