@@ -18,10 +18,10 @@ jobs:
           node-version: '24'
       - name: Install dependencies
         run: npm install axios xml2js moment
-      - name: Run g.js
+      - name: Run 2.js
         env:
           GRL: ${{ secrets.GRL }}
-        run: node g.js
+        run: node 2.js
       - name: Checkout dc repo
         uses: actions/checkout@v6
         with:
