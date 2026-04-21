@@ -1,9 +1,6 @@
 name: Run Node Script
-
 on:
   workflow_dispatch:
-#  schedule:
-#    - cron: '*/15 * * * *'
   repository_dispatch:
     types: [trigger_scraper]
 jobs:
@@ -16,15 +13,12 @@ jobs:
           repository: tgiy/ac
           ref: main
           token: ${{ secrets.CD }}
-
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '24'
-
       - name: Install dependencies
         run: npm install axios moment fs.promises
-
       - name: Run script
         env:
           GT9: ${{ secrets.GT9 }}
@@ -37,9 +31,7 @@ jobs:
           GT2: ${{ secrets.GT2 }}
           GT: ${{ secrets.GT }}
           KEY: ${{ secrets.KEY }}
-        
         run: node 1.js
-
       - name: Checkout target repo
         uses: actions/checkout@v6
         with:
@@ -47,24 +39,26 @@ jobs:
           ref: main
           path: dc
           token: ${{ secrets.CD }}
-
       - name: Copy s.json to dc
         run: |
           mkdir -p dc/logs
           cp /tmp/s.json dc/logs/s.json
-
       - name: Check for changes
         id: check_changes
         run: |
           cd dc
-          git add .
-          modified=$(git status --porcelain)
-          if [ -n "$modified" ]; then
-              echo "changes=true" >> $GITHUB_OUTPUT
-          else
+          content=$(cat logs/s.json | tr -d '[:space:]')
+          if [ "$content" = "[]" ]; then
               echo "changes=false" >> $GITHUB_OUTPUT
+          else
+              git add .
+              modified=$(git status --porcelain)
+              if [ -n "$modified" ]; then
+                  echo "changes=true" >> $GITHUB_OUTPUT
+              else
+                  echo "changes=false" >> $GITHUB_OUTPUT
+              fi
           fi
-
       - name: Push changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
