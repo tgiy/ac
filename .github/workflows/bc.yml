@@ -1,0 +1,46 @@
+name: Scraper
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */3 * * *'
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ac repo
+        uses: actions/checkout@v6
+        with:
+          repository: tgiy/ac
+          token: ${{ secrets.CD }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm install axios xml2js moment
+      - name: Run g.js
+        env:
+          GRL: ${{ secrets.GRL }}
+        run: node g.js
+      - name: Checkout dc repo
+        uses: actions/checkout@v6
+        with:
+          repository: tgiy/dc
+          path: dc
+          token: ${{ secrets.CD }}
+      - name: Update g.json
+        run: |
+          mkdir -p dc/logs
+          cp /tmp/g.json dc/logs/g.json
+      - name: Check and Push
+        run: |
+          cd dc
+          git config --global user.name 'tgiy'
+          git config --global user.email 'tgiy@action.com'
+          git add logs/g.json
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Update g.json"
+            git push origin main
+          else
+            echo "No changes detected."
+          fi
