@@ -5,7 +5,8 @@ const TOKEN_NAMES = ["GT", "GT2", "GT3", "GT4", "GT5", "GT6", "GT7", "GT8", "GT9
 const GITHUB_TOKENS = TOKEN_NAMES.map(name => process.env[name]).filter(t => t);
 let tokenIndex = 0;
 const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
-const START_DATE = moment().subtract(10, 'days');
+const NOW = moment();
+const START_DATE = NOW.clone().subtract(360, 'minutes');
 const OUTPUT_FILE = '/tmp/s.json'; 
 const MAX_RETRIES = 6;
 function getNextConfig() {
@@ -24,7 +25,7 @@ function getNextConfig() {
 }
 async function fetchWithRetry(url, config, type = "Request", retries = MAX_RETRIES) {
     try {
-        console.log(`[${config.tokenName}] Performing ${type}...`);
+        //console.log(`[${config.tokenName}] Performing ${type}...`);
         const response = await axios.get(url, { headers: config.headers });
         return response.data;
     } catch (error) {
@@ -107,6 +108,6 @@ async function writeJSONFile(data) {
     finalData.sort((a, b) => moment(b.date).diff(moment(a.date)));
     await writeJSONFile(finalData);
     console.log(`\n--- Process Completed ---`);
-    console.log(`Updated items (Found): ${results.length}`);
-    console.log(`Final items (Valid in 10 days): ${finalData.length}`);
+    //console.log(`Updated items (Found): ${results.length}`);
+    //console.log(`Final items: ${finalData.length}`);
 })();
