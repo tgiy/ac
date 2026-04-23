@@ -47,12 +47,17 @@ jobs:
         id: check_changes
         run: |
           cd dc
-          git add .
-          added_lines=$(git diff --cached -U0 | grep "^+" | grep -v "^+++" | wc -l)
-          if [ "$added_lines" -gt 0 ]; then
-            echo "changes=true" >> $GITHUB_OUTPUT
+          content=$(cat logs/s.json | tr -d '[:space:]')
+          if [ "$content" = "[]" ]; then
+              echo "changes=false" >> $GITHUB_OUTPUT
           else
-            echo "changes=false" >> $GITHUB_OUTPUT
+              git add .
+              modified=$(git status --porcelain)
+              if [ -n "$modified" ]; then
+                  echo "changes=true" >> $GITHUB_OUTPUT
+              else
+                  echo "changes=false" >> $GITHUB_OUTPUT
+              fi
           fi
       - name: Push changes
         if: steps.check_changes.outputs.changes == 'true'
