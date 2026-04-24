@@ -25,7 +25,6 @@ function getNextConfig() {
 }
 async function fetchWithRetry(url, config, type = "Request", retries = MAX_RETRIES) {
     try {
-        //console.log(`[${config.tokenName}] Performing ${type}...`);
         const response = await axios.get(url, { headers: config.headers });
         return response.data;
     } catch (error) {
@@ -46,12 +45,15 @@ async function searchGitHubCode(query, page = 1) {
     const url = `https://api.github.com/search/code?q=${encodeURIComponent(query)}&page=${page}&per_page=100`;
     return fetchWithRetry(url, getNextConfig(), "Search");
 }
-async function getFileLastModifiedDate(owner, repo, path) {
+async function getFileLastCommit(owner, repo, path) {
     const sinceIso = START_DATE.toISOString();
     const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}&since=${sinceIso}`;
-    const data = await fetchWithRetry(url, getNextConfig(), "GetDate");
+    const data = await fetchWithRetry(url, getNextConfig(), "GetCommit");
     if (data && data.length > 0) {
-        return data[0].commit.committer.date;
+        return {
+            date: data[0].commit.committer.date,
+            sha: data[0].sha
+        };
     }
     return null; 
 }
@@ -77,12 +79,13 @@ async function writeJSONFile(data) {
                     if (item.html_url.includes('url_check.txt')) continue;
                     const [owner, repo] = item.repository.full_name.split('/');
                     try {
-                        const lastModifiedDate = await getFileLastModifiedDate(owner, repo, item.path);
-                        if (lastModifiedDate) {
+                        const commitInfo = await getFileLastCommit(owner, repo, item.path);
+                        if (commitInfo) {
                             results.push({
+                                key: `${item.repository.full_name}/${item.path}`,
                                 keyword: keyword,
-                                date: lastModifiedDate,
-                                url: item.html_url
+                                date: commitInfo.date,
+                                url: `https://github.com/${item.repository.full_name}/blob/${commitInfo.sha}/${item.path}`
                             });
                         }
                     } catch (e) {}
@@ -93,21 +96,27 @@ async function writeJSONFile(data) {
         }
     }
     const existingData = await readJSONFile();
-    const updatedData = [...existingData];
+    const updatedData = existingData.map(e => {
+        if (e.key) return e;
+        const m = e.url.match(/github\.com\/([^/]+\/[^/]+)\/blob\/[^/]+\/(.+)/);
+        return { ...e, key: m ? `${m[1]}/${m[2]}` : undefined };
+    }).filter(e => e.key);
     results.forEach(result => {
-        const idx = updatedData.findIndex(entry => entry.url === result.url);
+        const idx = updatedData.findIndex(entry => entry.key === result.key);
         if (idx !== -1) {
-            if (moment(updatedData[idx].date).isBefore(result.date)) updatedData[idx] = result;
+            if (moment(result.date).isAfter(updatedData[idx].date)) {
+                updatedData[idx].date = result.date;
+                updatedData[idx].url = result.url;
+            }
         } else {
             updatedData.push(result);
         }
     });
-    const finalData = updatedData.filter(entry => {
-        return moment(entry.date).isAfter(START_DATE);
+    const finalData = updatedData.filter(entry => moment(entry.date).isAfter(START_DATE));
+    finalData.sort((a, b) => {
+        const diff = moment(b.date).diff(moment(a.date));
+        return diff !== 0 ? diff : a.key.localeCompare(b.key);
     });
-    finalData.sort((a, b) => moment(b.date).diff(moment(a.date)));
     await writeJSONFile(finalData);
     console.log(`\n--- Process Completed ---`);
-    //console.log(`Updated items (Found): ${results.length}`);
-    //console.log(`Final items: ${finalData.length}`);
 })();
