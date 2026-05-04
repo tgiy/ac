@@ -21,6 +21,7 @@ jobs:
         run: npm install axios moment fs.promises
       - name: Run script
         env:
+          GT10: ${{ secrets.GT10 }}
           GT9: ${{ secrets.GT9 }}
           GT8: ${{ secrets.GT8 }}
           GT7: ${{ secrets.GT7 }}
