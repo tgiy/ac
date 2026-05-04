@@ -1,7 +1,7 @@
 const axios = require('axios');
 const moment = require('moment');
 const fs = require('fs').promises;
-const TOKEN_NAMES = ["GT", "GT2", "GT3", "GT4", "GT5", "GT6", "GT7", "GT8", "GT9"];
+const TOKEN_NAMES = ["GT", "GT2", "GT3", "GT4", "GT5", "GT6", "GT7", "GT8", "GT9", "GT10"];
 const GITHUB_TOKENS = TOKEN_NAMES.map(name => process.env[name]).filter(t => t);
 let tokenIndex = 0;
 const SEARCH_KEYWORDS = process.env.KEY ? process.env.KEY.split(',') : [];
