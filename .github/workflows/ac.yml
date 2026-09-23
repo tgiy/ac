@@ -1,8 +1,10 @@
 name: Run Node Script
+
 on:
   workflow_dispatch:
   repository_dispatch:
     types: [trigger_scraper]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,12 +15,15 @@ jobs:
           repository: tgiy/ac
           ref: main
           token: ${{ secrets.CD }}
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '24'
+
       - name: Install dependencies
         run: npm install axios moment fs.promises
+
       - name: Run script
         env:
           GT10: ${{ secrets.GT10 }}
@@ -32,7 +37,12 @@ jobs:
           GT2: ${{ secrets.GT2 }}
           GT: ${{ secrets.GT }}
           KEY: ${{ secrets.KEY }}
+          KEY_O: ${{ secrets.KEY_O }}
+          URL_O: ${{ secrets.URL_O }}
+          MODEL_O: ${{ secrets.MODEL_O }}
+          MSG_O: ${{ secrets.MSG_O }}
         run: node 1.js
+
       - name: Checkout target repo
         uses: actions/checkout@v6
         with:
@@ -40,33 +50,32 @@ jobs:
           ref: main
           path: dc
           token: ${{ secrets.CD }}
-      - name: Copy s.json to dc
+
+      - name: Copy generated json files to dc
         run: |
           mkdir -p dc/logs
-          cp /tmp/s.json dc/logs/s.json
+          [ -f /tmp/s.json ] && cp /tmp/s.json dc/logs/s.json || echo "[]" > dc/logs/s.json
+          [ -f /tmp/o.json ] && cp /tmp/o.json dc/logs/o.json || echo "[]" > dc/logs/o.json
+
       - name: Check for changes
         id: check_changes
         run: |
           cd dc
-          content=$(cat logs/s.json | tr -d '[:space:]')
-          if [ "$content" = "[]" ]; then
-              echo "changes=false" >> $GITHUB_OUTPUT
+          git add .
+          modified=$(git status --porcelain)
+          if [ -n "$modified" ]; then
+              echo "changes=true" >> $GITHUB_OUTPUT
           else
-              git add .
-              modified=$(git status --porcelain)
-              if [ -n "$modified" ]; then
-                  echo "changes=true" >> $GITHUB_OUTPUT
-              else
-                  echo "changes=false" >> $GITHUB_OUTPUT
-              fi
+              echo "changes=false" >> $GITHUB_OUTPUT
           fi
+
       - name: Push changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
           cd dc
           git config --global user.name 'tgiy'
           git config --global user.email 'tgiy@action.com'
-          git commit -m "Update s.json"
+          git commit -m "Update logs (s.json & o.json)"
           git remote set-url origin https://tgiy:${{ secrets.CD }}@github.com/tgiy/dc.git
           git pull --rebase origin main
           git push origin main
