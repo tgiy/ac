@@ -156,7 +156,7 @@ async function processKeywords(keywords, isKeyO = false) {
                             if (rawContent && typeof rawContent === 'string') {
 
                                 const escapedKeyword = escapeRegExp(keyword);
-                                const regex = new RegExp(`(?<=^|[^a-zA-Z0-9])${escapedKeyword}[a-zA-Z0-9]{156}(?![a-zA-Z0-9])`, 'g');
+                                const regex = new RegExp(`(?<=^|[^a-zA-Z0-9_-])${escapedKeyword}[a-zA-Z0-9_-]{100,200}(?![a-zA-Z0-9_-])`, 'g');
                                 const matches = [...new Set(rawContent.match(regex) || [])];
 
                                 for (const apiKey of matches) {
