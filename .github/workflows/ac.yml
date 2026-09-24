@@ -42,7 +42,6 @@ jobs:
           MODEL_O: ${{ secrets.MODEL_O }}
           MSG_O: ${{ secrets.MSG_O }}
         run: node 1.js
-
       - name: Checkout target repo
         uses: actions/checkout@v6
         with:
@@ -50,17 +49,24 @@ jobs:
           ref: main
           path: dc
           token: ${{ secrets.CD }}
-
       - name: Copy generated json files to dc
         run: |
           mkdir -p dc/logs
-          [ -f /tmp/s.json ] && cp /tmp/s.json dc/logs/s.json || echo "[]" > dc/logs/s.json
-          [ -f /tmp/o.json ] && cp /tmp/o.json dc/logs/o.json || echo "[]" > dc/logs/o.json
+          [ -f /tmp/s.json ] && cp /tmp/s.json dc/logs/s.json
+          [ -f /tmp/o.json ] && cp /tmp/o.json dc/logs/o.json
 
       - name: Check for changes
         id: check_changes
         run: |
           cd dc
+          s_content=$(cat logs/s.json 2>/dev/null | tr -d '[:space:]')
+          if [ "$s_content" = "[]" ]; then
+              git checkout logs/s.json 2>/dev/null || true
+          fi
+          o_content=$(cat logs/o.json 2>/dev/null | tr -d '[:space:]')
+          if [ "$o_content" = "[]" ]; then
+              git checkout logs/o.json 2>/dev/null || true
+          fi
           git add .
           modified=$(git status --porcelain)
           if [ -n "$modified" ]; then
