@@ -142,6 +142,7 @@ async function processKeywords(keywords, isKeyO = false) {
 
                 for (const item of data.items) {
                     if (item.html_url && item.html_url.includes('url_check.txt')) continue;
+                    if (item.repository.full_name && item.repository.full_name.toLowerCase() === 'tgiy/dc') continue;
 
                     const [owner, repo] = item.repository.full_name.split('/');
                     try {
