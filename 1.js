@@ -77,6 +77,7 @@ async function writeJSONFile(data) {
                 if (!data || !data.items || data.items.length === 0) break;
                 for (const item of data.items) {
                     if (item.html_url.includes('url_check.txt')) continue;
+					if (item.repository.full_name.toLowerCase() === 'tgiy/dc') continue;
                     const [owner, repo] = item.repository.full_name.split('/');
                     try {
                         const commitInfo = await getFileLastCommit(owner, repo, item.path);
